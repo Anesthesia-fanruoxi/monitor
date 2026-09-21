@@ -7,8 +7,8 @@ server/monitor-server
 *.so
 *.dylib
 
-# 测试文件
-*_test.go
+# 测试产物
+# 注意：不要忽略 *_test.go —— 单元测试需要随代码一起提交
 *.test
 *.out
 coverage.txt
@@ -35,3 +35,23 @@ config.yaml
 
 # Server 运行时文件
 server/config/
+
+# 编译产物（build/dist 目录 + 插件 Linux 无后缀二进制）
+agent/build/
+server/build/
+agent-plugs/dist/
+agent-plugs/plugins/hard/hard
+agent-plugs/plugins/k8s/k8s
+agent-plugs/plugins/nginx/nginx
+agent-plugs/plugins/ssl/ssl
+agent-plugs/cmd/genindex/genindex
+
+# Agent 运行时文件（补充）
+.plugins.json
+
+# 本地开发文件与工具缓存（不进版本库）
+go.work
+go.work.sum
+.gocache/
+.trae/
+.workbuddy/

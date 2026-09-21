@@ -1,0 +1,13 @@
+name: ssl
+version: 0.1.0
+proto: 1
+platform: linux/amd64
+entry: ssl
+min_agent_version: 1.0.0
+
+# 采集周期与注销阈值：5 分钟周期，证书探测可能慢，阈值 15 分钟
+default_interval: 5m
+default_timeout: 15m
+
+remote_config_keys:
+  - domains_file

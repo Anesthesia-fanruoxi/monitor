@@ -1,0 +1,17 @@
+# monitor-server 部署编排（仅启动，镜像构建走本地交叉编译 + Dockerfile）
+#
+# 插件更新：直接替换宿主机 ./dist/ 下的二进制文件即可，
+# agent 会定时 HEAD 比对 sha256 自动下载重启，server 容器无需重建。
+services:
+  monitor-server:
+    image: hub.hzbxhd.com/middleware/monitor-server:latest
+    container_name: monitor-server
+    restart: unless-stopped
+    ports:
+      - "9080:8080"
+    volumes:
+      - ./config/config.yaml:/app/config/config.yaml
+      - ./dist:/app/dist
+    # 密钥也可用环境变量注入（优先级高于 config.yaml，密钥可不落盘）：
+    # environment:
+    #   MONITOR_ENCRYPTED: "填16/24/32字节密钥"

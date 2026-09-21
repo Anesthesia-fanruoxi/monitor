@@ -1,0 +1,61 @@
+# monitor-agent 参考配置
+# 放置于 agent 可执行文件同目录，命名 config.yaml
+# 5 秒热加载（mtime 轮询）：修改后无需重启，插件下个采集周期生效
+# 注入优先级：MONITOR_CONFIG 环境变量（整份 JSON）> 本文件
+
+# 项目标识：存储原始英文缩写（如 jxh），中文展示由展示层负责
+project: "jxh"
+
+# server 上报端点：完整 URL，指向 /metrics_data
+metrics_url: "http://127.0.0.1:8080/metrics_data"
+
+# 加密盐：16/24/32 字节，与 server 端 config.yaml 的 encrypted 保持一致
+encryption_key: "yiDoETicN1M06v7pb1zdhSc3QFOFOaRq"
+
+# 插件二进制缺失时，是否从 server /plugin/download 自动下载
+auto_update: true
+
+# 插件段：enable / interval / timeout 为壳保留键，config 下全部留给插件
+# interval ∈ [1s, 30m]，缺省 30s
+# timeout ∈ [2×interval, 30m]，非法或越界回落 2.5×interval
+# 注意：各插件 interval 必须小于 server 端对应注销阈值
+#       （hard/nginx 45s、k8s 3m、ssl 15m），否则序列会被提前清掉
+plugins:
+  hard:
+    enable: true
+    interval: 15s
+    timeout: 45s
+    # hard 无自定义配置，config 可省略
+
+  k8s:
+    enable: true
+    interval: 60s
+    timeout: 150s
+    config:
+      # kubeconfig 文件路径（集群外采集），缺省 /root/.kube/config
+      kubeconfig: "/root/monitor/admin.kubeconfig"
+      # 跳过 TLS 证书验证（证书 SAN 不含访问 IP 时使用）
+      insecure_skip_tls_verify: true
+      # 或用证书 SAN 中的名字验证（连接地址不变，与上一行二选一）
+      # tls_server_name: "172.16.0.8"
+      # 命名空间白名单；空数组 = 全部 namespace
+      namespaces: []
+      # true = 仅为配置了 resource limit 的 pod 上报 k8s_pod_limit
+      only_with_limits: false
+
+  nginx:
+    enable: true
+    interval: 15s
+    timeout: 45s
+    config:
+      # nginx stub_status 地址
+      nginx_status_url: "http://127.0.0.1/nginx_status"
+
+  ssl:
+    enable: true
+    interval: 10m
+    timeout: 20m
+    config:
+      # 域名列表文件，每行一个域名；# 开头为注释，空行忽略
+      # 探测失败的域名本轮不上报
+      domains_file: "/etc/monitor/ssl_domains.txt"

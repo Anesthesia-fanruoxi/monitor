@@ -1,0 +1,10 @@
+name: hard
+version: 0.3.0
+proto: 1
+interval: 15s
+timeout: 45s
+description: 主机指标（cpu/内存/磁盘/inode/IO/网络/连接/进程/句柄/swap/uptime，共 35 项）
+
+# proc_root：procfs 根路径，容器内挂载宿主 /proc 时配 /host/proc（DaemonSet 场景）
+remote_config_keys:
+  - proc_root

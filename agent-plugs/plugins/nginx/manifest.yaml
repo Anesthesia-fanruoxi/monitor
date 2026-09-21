@@ -1,0 +1,13 @@
+name: nginx
+version: 0.1.0
+proto: 1
+platform: linux/amd64
+entry: nginx
+min_agent_version: 1.0.0
+
+# 采集周期与注销阈值：壳唯一的调度参数来源，config.yaml 可覆盖（§3.6）
+default_interval: 15s
+default_timeout: 45s
+
+remote_config_keys:
+  - nginx_status_url

@@ -1,0 +1,8 @@
+# k8s 插件默认配置（随制品分发，升级时覆盖，用户不要改）
+# namespaces: 命名空间白名单；空数组 = 全部 namespace
+namespaces: []
+
+# only_with_limits:
+#   false（缺省）= 全部 pod 报 k8s_pod_limit（无 limit 则 0）
+#   true         = 仅给有 resource limit 的 pod 报 k8s_pod_limit
+only_with_limits: false

@@ -1,0 +1,90 @@
+# 每节点硬件采集（DaemonSet）
+#
+# 前置：
+#   1. 构建并推送 agent 镜像：agent/release.ps1 -Tag 1.3
+#   2. 替换 metrics_url / encryption_key 为本环境实际值
+# 应用：kubectl apply -f daemonset-agent-hard.yaml
+#
+# 要点：
+#   - hostNetwork: true        → /proc/net/* 显示宿主全部网卡（netns 共享）
+#   - hostPath /proc → /host/proc → hard 配 proc_root 后读宿主 procfs，
+#     节点名自动取自 /host/proc/sys/kernel/hostname
+#   - 只启用 hard；k8s 集群级指标由集群外（harbor 裸机）agent 采集，节点内不重复采
+#   - 插件由 agent 启动时从 server 自动下载到 /app/plugins（emptyDir，pod 重建后重下）
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitor
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-node-config
+  namespace: monitor
+data:
+  config.yaml: |
+    project: "k8s-node"
+    metrics_url: "http://192.168.6.2:9080/metrics_data"
+    encryption_key: "yiDoETicN1M06v7pb1zdhSc3QFOFOaRq"
+    auto_update: true
+    plugins:
+      hard:
+        enable: true
+        interval: 15s
+        timeout: 45s
+        config:
+          proc_root: "/host/proc"    # 读宿主 /proc（容器内挂载点）
+      k8s:
+        enable: false                # 集群级指标由集群外 agent 采集
+      nginx:
+        enable: false
+      ssl:
+        enable: false
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: monitor-agent-node
+  namespace: monitor
+spec:
+  selector:
+    matchLabels:
+      app: monitor-agent-node
+  template:
+    metadata:
+      labels:
+        app: monitor-agent-node
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      tolerations:                   # master / 有污点节点也部署
+        - operator: Exists
+      containers:
+        - name: agent
+          image: hub.hzbxhd.com/monitoring/agent:1.3
+          workingDir: /app
+          volumeMounts:
+            - name: host-proc
+              mountPath: /host/proc
+              readOnly: true
+            - name: config
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            - name: plugins
+              mountPath: /app/plugins   # 自动下载落点，需可写
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: 500m, memory: 256Mi }
+      volumes:
+        - name: host-proc
+          hostPath:
+            path: /proc
+            type: Directory
+        - name: config
+          configMap:
+            name: agent-node-config
+        - name: plugins
+          emptyDir: {}
+          # 如需插件跨 pod 重建持久化，可换 hostPath（每节点共享）：
+          # hostPath: { path: /var/lib/monitor-agent/plugins, type: DirectoryOrCreate }

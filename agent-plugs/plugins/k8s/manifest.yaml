@@ -1,0 +1,17 @@
+name: k8s
+version: 0.2.0
+proto: 1
+platform: linux/amd64
+entry: k8s
+min_agent_version: 1.0.0
+
+# 采集周期 60s，注销阈值 180s（≥3×周期，见 §3.4 第 3 条）
+default_interval: 60s
+default_timeout: 180s
+
+remote_config_keys:
+  - kubeconfig
+  - tls_server_name
+  - insecure_skip_tls_verify
+  - namespaces
+  - only_with_limits
